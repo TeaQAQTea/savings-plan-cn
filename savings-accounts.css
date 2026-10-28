@@ -1,1 +1,3 @@
 .savings-heading,.accounts-total{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 12px}.savings-account{border:1px solid #dce3d3;border-radius:12px;background:#f7f9f2;padding:12px;margin:12px 0}.savings-account label{display:block;margin:0 0 10px;font-size:13px}.savings-account input{width:100%;box-sizing:border-box;margin-top:6px}.savings-account>button{display:block;margin-left:auto}.accounts-total strong{font-size:20px}.accounts-total span{font-size:13px;color:#71816b}
+
+.savings-account-heading{display:block;margin-bottom:10px;color:#264e41}.savings-account.just-added{outline:2px solid #588b6e;background:#edf7e9}#savingsAccountCount{font-size:12px;font-weight:400;color:#72816c}#savingsAccountNotice:empty{display:none}
