@@ -11,3 +11,5 @@
 
 #page-overview .milestone-card>.milestone-metrics{grid-template-columns:1fr}#page-overview .milestone-card>.milestone-metrics strong{font-size:19px;letter-spacing:-.3px}#page-overview .milestone-card>.milestone-metrics span{font-size:10px}#page-overview .milestone-more .milestone-metrics{grid-template-columns:1fr}#page-overview .milestone-more .milestone-metrics strong{font-size:12px}
 @media(max-width:640px){#page-overview .milestone-card>.milestone-metrics strong{font-size:18px}}
+
+.page-warning:not(.warning){display:none}
