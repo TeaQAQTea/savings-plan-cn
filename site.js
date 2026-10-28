@@ -1,4 +1,95 @@
-// dist/supabase-vendor.mjs
+// src/savings-accounts.mjs
+function ensureAccounts(s) {
+  if (s.accounts === void 0) s.accounts = [{ id: "legacy-savings", name: "\u539F\u6709\u5B58\u6B3E", amount: String(s.current ?? "") }];
+  return s.accounts;
+}
+function accountsTotal(accounts) {
+  if (!accounts?.length) throw Error("\u8BF7\u6DFB\u52A0\u81F3\u5C11\u4E00\u4E2A\u5B58\u6B3E\u8D26\u6237");
+  let total = 0;
+  for (const a of accounts) {
+    if (a.amount === "" || !Number.isFinite(Number(a.amount)) || Number(a.amount) < 0 || Number(a.amount) > 1e9) throw Error("\u8BF7\u586B\u5199\u6BCF\u4E2A\u8D26\u6237\u7684\u6709\u6548\u4F59\u989D");
+    total += Math.round(Number(a.amount) * 100);
+  }
+  if (total > 1e11) throw Error("\u8D26\u6237\u5408\u8BA1\u4E0D\u80FD\u8D85\u8FC710\u4EBF\u5143");
+  return (total / 100).toFixed(2);
+}
+function initSavingsAccounts({ getState, onChange }) {
+  const $2 = (s) => document.querySelector(s), money2 = new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" });
+  function update() {
+    try {
+      $2("#accountsTotal").textContent = money2.format(Number(accountsTotal(getState().accounts)));
+    } catch {
+      $2("#accountsTotal").textContent = "\u8BF7\u5B8C\u5584\u8D26\u6237\u4F59\u989D";
+    }
+  }
+  function changed() {
+    onChange();
+    update();
+    $2("#balanceSaveStatus").textContent = "\u8D26\u6237\u4FEE\u6539\u5DF2\u5B58\u672C\u673A\uFF0C\u91D1\u989D\u5F85\u786E\u8BA4\u540E\u7528\u4E8E\u9884\u7B97";
+  }
+  function render2() {
+    const list = $2("#savingsAccounts");
+    list.replaceChildren();
+    ensureAccounts(getState()).forEach((a, i) => {
+      const card = document.createElement("div");
+      card.className = "savings-account";
+      const nameLabel = document.createElement("label");
+      nameLabel.textContent = "\u8D26\u6237\u540D\u79F0";
+      const name = document.createElement("input");
+      name.value = a.name;
+      name.maxLength = 100;
+      name.placeholder = "\u4F8B\u5982\uFF1A\u94F6\u884C\u5361\u3001\u5FAE\u4FE1\u3001\u652F\u4ED8\u5B9D";
+      name.setAttribute("aria-label", `\u5B58\u6B3E\u8D26\u6237 ${i + 1} \u540D\u79F0`);
+      name.oninput = () => {
+        a.name = name.value;
+        changed();
+      };
+      nameLabel.append(name);
+      const amountLabel = document.createElement("label");
+      amountLabel.textContent = "\u6838\u5BF9\u4F59\u989D";
+      const amount = document.createElement("input");
+      amount.type = "number";
+      amount.min = "0";
+      amount.max = "1000000000";
+      amount.step = ".01";
+      amount.value = a.amount;
+      amount.placeholder = "0.00";
+      amount.setAttribute("aria-label", `\u5B58\u6B3E\u8D26\u6237 ${i + 1} \u4F59\u989D`);
+      amount.oninput = () => {
+        a.amount = amount.value;
+        changed();
+      };
+      amountLabel.append(amount);
+      const remove2 = document.createElement("button");
+      remove2.type = "button";
+      remove2.className = "text-btn";
+      remove2.textContent = "\u79FB\u9664";
+      remove2.disabled = getState().accounts.length === 1;
+      remove2.setAttribute("aria-label", `\u79FB\u9664\u5B58\u6B3E\u8D26\u6237 ${i + 1}`);
+      remove2.onclick = () => {
+        if (!window.confirm("\u79FB\u9664\u6B64\u8D26\u6237\uFF1F\u786E\u8BA4\u66F4\u65B0\u8D26\u6237\u5408\u8BA1\u540E\u624D\u4F1A\u5F71\u54CD\u9884\u7B97\uFF0C\u4E0D\u4F1A\u5B9E\u9645\u8F6C\u51FA\u8D44\u91D1\u3002")) return;
+        getState().accounts.splice(i, 1);
+        changed();
+        render2();
+      };
+      card.append(nameLabel, amountLabel, remove2);
+      list.append(card);
+    });
+    update();
+    $2("#addSavingsAccount").disabled = getState().accounts.length >= 20;
+  }
+  $2("#addSavingsAccount").onclick = () => {
+    const s = getState();
+    if (ensureAccounts(s).length >= 20) return;
+    s.accounts.push({ id: crypto.randomUUID(), name: "", amount: "" });
+    changed();
+    render2();
+    $2("#savingsAccounts").lastElementChild.querySelector("input").focus();
+  };
+  return render2;
+}
+
+// src/supabase-vendor.mjs
 var EXTRACTOR_KEY = /* @__PURE__ */ Symbol.for("@supabase/supabase-js.traceContextExtractor");
 function getTraceContextExtractor() {
   return globalThis[EXTRACTOR_KEY];
@@ -20715,7 +20806,7 @@ function shouldShowDeprecationWarning() {
 }
 if (shouldShowDeprecationWarning()) console.warn("\u26A0\uFE0F  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715");
 
-// dist/sync-engine.mjs
+// src/sync-engine.mjs
 var SyncEngine = class {
   constructor({ read, write, getState, apply, status }) {
     Object.assign(this, { read, write, getState, apply, status });
@@ -20799,7 +20890,7 @@ var SyncEngine = class {
   }
 };
 
-// dist/cloud.mjs
+// src/cloud.mjs
 var url = "https://epqjtrusziekzwqbyogx.supabase.co";
 var key = "sb_publishable_qiAZSBbUVwati43GH6NvZw_ghI7uAI_";
 function initCloud({ getState, apply }) {
@@ -20918,7 +21009,7 @@ function initCloud({ getState, apply }) {
   return () => engine.changed();
 }
 
-// dist/ledger.mjs
+// src/ledger.mjs
 function evaluateAmount(expression) {
   const text = String(expression).replaceAll("\xD7", "*").replaceAll("\xF7", "/").replaceAll("\u2212", "-").replace(/\s/g, "");
   if (!text || text.length > 300) throw Error("\u8BF7\u8F93\u5165\u7B97\u5F0F\uFF0C\u4F8B\u5982 25+18*2");
@@ -20980,7 +21071,7 @@ function monthLedger(s, month) {
   return { total, count };
 }
 
-// dist/balance-snapshot.mjs
+// src/balance-snapshot.mjs
 var shanghaiLocal = (now = /* @__PURE__ */ new Date()) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(now).replace(" ", "T");
 function entryTime(date, now = /* @__PURE__ */ new Date()) {
   return date === shanghaiLocal(now).slice(0, 10) ? now.toISOString() : (/* @__PURE__ */ new Date(date + "T" + (date < shanghaiLocal(now).slice(0, 10) ? "23:59:59.999" : "00:00:00") + "+08:00")).toISOString();
@@ -21033,7 +21124,7 @@ function snapshotBalance(s, incomes, expenses, today, asOf = /* @__PURE__ */ new
   return balance;
 }
 
-// dist/income-entries.mjs
+// src/income-entries.mjs
 function initIncomeEntries({ getState, getResult, onChange }) {
   const $2 = (s) => document.querySelector(s), money2 = (n) => new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" }).format(n / 100), dialog = $2("#incomeEntryDialog");
   let month = "", editing = null, timeDirty = false;
@@ -21146,7 +21237,7 @@ function initIncomeEntries({ getState, getResult, onChange }) {
   };
 }
 
-// dist/timeline.mjs
+// src/timeline.mjs
 var DAY = 864e5;
 var COLORS = ["#397D68", "#5278B6", "#B57B36", "#9164AC", "#BC626A", "#3B8594", "#8A8C3C", "#B56D49", "#6675AC", "#A45C85", "#45836A", "#7A66AD", "#AA7839", "#40878A", "#B25D50", "#637F3E", "#6E72B4", "#A16D48", "#84649A", "#4B7D9B"];
 function goalColor(state2, id) {
@@ -21240,7 +21331,7 @@ function renderTimeline(state2, result2) {
   $2("#timeCaption").textContent = `\u4ECA\u5929 ${data.today}\uFF0C\u65F6\u95F4\u8FDB\u5EA6\u6BCF\u5929\u81EA\u52A8\u524D\u79FB\u3002\u65F6\u95F4\u63A8\u8FDB\u4E0D\u4EE3\u8868\u5B58\u6B3E\u5DF2\u5230\u8D26\u3002`;
 }
 
-// dist/cycle-budget.mjs
+// src/cycle-budget.mjs
 var DAY2 = 864e5;
 var day = (v) => Date.parse(v + "T00:00:00Z") / DAY2;
 var nextDay = (v) => new Date((day(v) + 1) * DAY2).toISOString().slice(0, 10);
@@ -21294,7 +21385,7 @@ function renderCycleBudget(state2, result2) {
   $2("#nextCycleCaption").textContent = cycles.next ? `\u4E0B\u4E00\u5468\u671F ${cycles.next.start} \u81F3 ${cycles.next.end}\uFF0C\u9884\u8BA1\u6BCF\u5929\u53EF\u7528 ${money2(cycles.next.daily)}\u3002` : "\u6DFB\u52A0\u4E0B\u4E00\u4E2A\u5B58\u6B3E\u8282\u70B9\u540E\uFF0C\u663E\u793A\u4E0B\u4E00\u5468\u671F\u53EF\u7528\u9884\u7B97\u3002";
 }
 
-// dist/calendar.mjs
+// src/calendar.mjs
 function initCalendar({ getState, getResult, onChange }) {
   const $2 = (s) => document.querySelector(s), money2 = (n) => new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" }).format(n / 100);
   let month = dateKey(/* @__PURE__ */ new Date()).slice(0, 7), day2 = "", editing = null, timeDirty = false;
@@ -21472,7 +21563,7 @@ function initCalendar({ getState, getResult, onChange }) {
   return refresh;
 }
 
-// dist/average-model.mjs
+// src/average-model.mjs
 function splitDailyBudget(resources, spent, weights) {
   const used = spent.reduce((n, v) => n + v, 0), available = Math.max(0, resources - used), total = weights.reduce((n, v) => n + v, 0), allocations = weights.map((w) => total ? Math.floor(available * w / total) : 0);
   if (total) {
@@ -21551,7 +21642,7 @@ function averageForecast(s, goals, current, incomeSchedule2, expenseSchedule2, t
   return { rows, final: balance, liveBalance: recordedBalance(s, incomeSchedule2, expenseSchedule2, today, asOf) };
 }
 
-// dist/model.mjs
+// src/model.mjs
 var cents2 = (v) => Math.round(Number(v) * 100);
 function newGoal(deadline, id = crypto.randomUUID()) {
   return { id, title: "", target: "", deadline };
@@ -21624,6 +21715,14 @@ function validateState(input) {
   if (s.balanceAt !== void 0 && (!Number.isFinite(Date.parse(s.balanceAt)) || typeof s.balanceAt !== "string")) throw Error("\u4F59\u989D\u786E\u8BA4\u65F6\u95F4\u65E0\u6548");
   if (s.balanceCovered !== void 0 && (!s.balanceCovered || typeof s.balanceCovered !== "object" || Array.isArray(s.balanceCovered) || Object.values(s.balanceCovered).some((v) => !Number.isFinite(v) || v < 0))) throw Error("\u4F59\u989D\u786E\u8BA4\u57FA\u7EBF\u65E0\u6548");
   for (const collection of [s.daily, s.incomeEntries]) for (const [date, items] of Object.entries(collection || {})) for (const item of items) if (item.occurredAt !== void 0 && (!Number.isFinite(Date.parse(item.occurredAt)) || typeof item.occurredAt !== "string")) throw Error("\u8BB0\u8D26\u65F6\u95F4\u65E0\u6548");
+  if (s.accounts !== void 0) {
+    if (!Array.isArray(s.accounts) || s.accounts.length < 1 || s.accounts.length > 20) throw Error("\u5B58\u6B3E\u8D26\u6237\u6570\u91CF\u65E0\u6548");
+    const accountIds = /* @__PURE__ */ new Set();
+    for (const a of s.accounts) {
+      if (!a || typeof a.id !== "string" || accountIds.has(a.id) || typeof a.name !== "string" || a.name.length > 100 || !validAmount(a.amount)) throw Error("\u5B58\u6B3E\u8D26\u6237\u683C\u5F0F\u65E0\u6548");
+      accountIds.add(a.id);
+    }
+  }
   return s;
 }
 var CYCLES = { monthly: 1, quarterly: 3, halfyear: 6, yearly: 12, once: 0 };
@@ -21674,7 +21773,7 @@ function calculate(s, asOf = /* @__PURE__ */ new Date()) {
   return { ...base, ...forecast, goals, current, target, remaining, count, progress: target === 0 ? 100 : Math.max(0, Math.min(100, forecast.liveBalance / target * 100)), shortfall: rows.reduce((n, r) => n + r.shortfall, 0), missed: goals.filter((g) => g.projected !== null && g.projected < g.target), cashGaps: rows.filter((r) => r.balance < 0) };
 }
 
-// dist/app.js
+// src/app.js
 var $ = (s) => document.querySelector(s);
 var key2 = "savings-planner-v1";
 var fmt = new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" });
@@ -21804,6 +21903,8 @@ function persist() {
   }
 }
 function loadFields() {
+  ensureAccounts(state);
+  renderSavingsAccounts();
   schedulePage = null;
   $("#current").value = state.current ?? "";
   $("#balanceTime").value = shanghaiLocal();
@@ -21819,7 +21920,7 @@ function loadFields() {
   };
   $("#confirmBalance").onclick = () => {
     try {
-      const amount = $("#current").value;
+      const amount = accountsTotal(state.accounts);
       if (amount === "" || Number(amount) < 0 || Number(amount) > 1e9 || !Number.isFinite(Number(amount))) throw Error("\u8BF7\u586B\u5199\u6709\u6548\u7684\u5B58\u6B3E\u4F59\u989D");
       const at = balanceTimeDirty ? (/* @__PURE__ */ new Date($("#balanceTime").value + "+08:00")).toISOString() : (/* @__PURE__ */ new Date()).toISOString();
       if (Date.parse(at) > Date.now()) throw Error("\u786E\u8BA4\u65F6\u95F4\u4E0D\u80FD\u665A\u4E8E\u73B0\u5728");
@@ -21828,7 +21929,7 @@ function loadFields() {
       render();
       balanceTimeDirty = false;
       $("#balanceTime").value = shanghaiLocal(new Date(at));
-      $("#balanceSaveStatus").textContent = "\u4F59\u989D\u5DF2\u66F4\u65B0\uFF0C\u4EE5\u6B64\u65F6\u95F4\u4E3A\u8D77\u70B9\u7EE7\u7EED\u8BB0\u8D26";
+      $("#balanceSaveStatus").textContent = "\u8D26\u6237\u5408\u8BA1\u5DF2\u786E\u8BA4\uFF0C\u4EE5\u6B64\u65F6\u95F4\u4E3A\u8D77\u70B9\u7EE7\u7EED\u8BB0\u8D26";
     } catch (err) {
       $("#balanceSaveStatus").textContent = err.message;
     }
@@ -22240,6 +22341,7 @@ refreshCalendar = initCalendar({ getState: () => state, getResult: () => result,
   persist();
   render();
 } });
+var renderSavingsAccounts = initSavingsAccounts({ getState: () => state, onChange: () => persist() });
 loadFields();
 var lastRenderDay = shanghaiDate();
 function refreshOnNewDay() {
